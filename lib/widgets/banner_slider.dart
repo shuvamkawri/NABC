@@ -1,6 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../utils/responsive.dart';
+import '../services/banners_service.dart';
+
+/// Parses a "#RRGGBB" (or "RRGGBB") hex string into a [Color].
+/// Falls back to NABC blue when missing/invalid.
+Color parseHexColor(String? hex) {
+  if (hex == null || hex.isEmpty) return const Color(0xFF1565C0);
+  var h = hex.replaceAll('#', '').trim();
+  if (h.length == 6) h = 'FF$h';
+  final v = int.tryParse(h, radix: 16);
+  return v == null ? const Color(0xFF1565C0) : Color(v);
+}
 
 class BannerSlide {
   final String cat;
@@ -31,7 +42,10 @@ const nabcBannerSlides = [
 ];
 
 class BannerSlider extends StatefulWidget {
-  final List<BannerSlide> slides;
+  /// Explicit slides. When null, the slider loads banners from the API
+  /// (admin-managed) and falls back to [nabcBannerSlides] until they arrive.
+  final List<BannerSlide>? slides;
+  final String? excludeCategory; // drop slides with this category (e.g. partners)
   final double? height;
   final bool showTopBar;
   final VoidCallback? onSearch;
@@ -39,7 +53,8 @@ class BannerSlider extends StatefulWidget {
 
   const BannerSlider({
     super.key,
-    this.slides = nabcBannerSlides,
+    this.slides,
+    this.excludeCategory,
     this.height,
     this.showTopBar = false,
     this.onSearch,
@@ -54,20 +69,43 @@ class _BannerSliderState extends State<BannerSlider> {
   late PageController _ctrl;
   Timer? _timer;
   int _index = 0;
+  late List<BannerSlide> _slides;
+
+  List<BannerSlide> _filter(List<BannerSlide> s) =>
+      widget.excludeCategory == null
+          ? s
+          : s.where((x) => x.cat != widget.excludeCategory).toList();
 
   @override
   void initState() {
     super.initState();
     _ctrl = PageController();
+    // Show passed/bundled slides immediately; refresh from the API when no
+    // explicit slides were provided.
+    _slides = _filter(widget.slides ?? nabcBannerSlides);
+    if (widget.slides == null) _loadFromApi();
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted || widget.slides.isEmpty) return;
-      final next = (_index + 1) % widget.slides.length;
+      if (!mounted || _slides.isEmpty) return;
+      final next = (_index + 1) % _slides.length;
       if (_ctrl.hasClients) {
         _ctrl.animateToPage(next,
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut);
       }
     });
+  }
+
+  Future<void> _loadFromApi() async {
+    try {
+      final api = await BannersService.fetch();
+      if (!mounted || api.isEmpty) return;
+      setState(() {
+        _slides = _filter(api);
+        _index = 0;
+      });
+    } catch (_) {
+      // keep fallback slides on any error
+    }
   }
 
   @override
@@ -79,7 +117,7 @@ class _BannerSliderState extends State<BannerSlider> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.slides.isEmpty) return const SizedBox.shrink();
+    if (_slides.isEmpty) return const SizedBox.shrink();
     final h = widget.height ?? context.hp(25).clamp(160.0, 220.0);
 
     return SizedBox(
@@ -89,9 +127,9 @@ class _BannerSliderState extends State<BannerSlider> {
           // Slides
           PageView.builder(
             controller: _ctrl,
-            itemCount: widget.slides.length,
+            itemCount: _slides.length,
             onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (_, i) => _buildSlide(context, widget.slides[i]),
+            itemBuilder: (_, i) => _buildSlide(context, _slides[i]),
           ),
 
           // Top bar overlay (optional)
@@ -146,7 +184,7 @@ class _BannerSliderState extends State<BannerSlider> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                widget.slides.length,
+                _slides.length,
                 (i) => GestureDetector(
                   onTap: () => _ctrl.animateToPage(i,
                       duration: const Duration(milliseconds: 400),

@@ -70,7 +70,6 @@ class _MyEventsScreenState extends State<MyEventsScreen>
           // ── Compact Banner Slider ─────────────────────────────────
           if (!widget.standalone)
             BannerSlider(
-              slides: nabcBannerSlides,
               height: sliderH,
               showTopBar: false,
             ),

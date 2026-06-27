@@ -77,7 +77,6 @@ class _EventCalendarScreenState extends State<EventCalendarScreen> {
             children: [
               // ── Banner Slider ────────────────────────────────────────
               BannerSlider(
-                slides: nabcBannerSlides,
                 height: sliderH,
               ),
 
@@ -134,23 +133,10 @@ class _EventCalendarScreenState extends State<EventCalendarScreen> {
           return _stateMessage(context, 'No events available yet.');
         }
 
-        // Distinct event dates, in the order the backend returns them — used
-        // both for the filter chips and to guard a now-stale filter.
-        final allDates = <String>[];
-        for (final e in allEvents) {
-          if (e.date.isNotEmpty && !allDates.contains(e.date)) {
-            allDates.add(e.date);
-          }
-        }
-        // If the selected day no longer exists in the data, fall back to All.
-        if (_filterDay != 'All' && !allDates.contains(_filterDay)) {
-          _filterDay = 'All';
-        }
-
         // Filter by day
         final filtered = _filterDay == 'All'
             ? allEvents
-            : allEvents.where((e) => e.date == _filterDay).toList();
+            : allEvents.where((e) => e.date.contains(_filterDay)).toList();
 
         // Group by date — dynamic, so any uploaded dates appear in order.
         final Map<String, List<Event>> grouped = {};
@@ -232,14 +218,13 @@ class _EventCalendarScreenState extends State<EventCalendarScreen> {
                     ),
                   ]),
                   const SizedBox(height: 10),
-                  // Day filter chips — built from the actual event dates
+                  // Day filter chips
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _filterChip(context, cs, 'All', 'All'),
-                        for (final d in allDates)
-                          _filterChip(context, cs, d, _shortDate(d)),
+                        for (final d in ['All', 'Jul 3', 'Jul 4', 'Jul 5'])
+                          _filterChip(context, cs, d),
                       ],
                     ),
                   ),
@@ -273,16 +258,18 @@ class _EventCalendarScreenState extends State<EventCalendarScreen> {
     );
   }
 
-  /// Shortens a backend date like "Jun 30, 2023" to "Jun 30" for the chip.
-  String _shortDate(String date) =>
-      date.contains(',') ? date.split(',').first.trim() : date;
-
-  Widget _filterChip(
-      BuildContext context, ColorScheme cs, String value, String label) {
-    final active = _filterDay == value;
+  Widget _filterChip(BuildContext context, ColorScheme cs, String label) {
+    final dayKey = label == 'All'
+        ? 'All'
+        : label.replaceFirst('Jul ', 'July ').contains('Jul 3')
+            ? '3,'
+            : label.contains('Jul 4')
+                ? '4,'
+                : '5,';
+    final active = _filterDay == dayKey || (label == 'All' && _filterDay == 'All');
 
     return GestureDetector(
-      onTap: () => setState(() => _filterDay = value),
+      onTap: () => setState(() => _filterDay = label == 'All' ? 'All' : dayKey),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8),

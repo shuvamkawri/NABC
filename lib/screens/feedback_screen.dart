@@ -1,9 +1,12 @@
-﻿import 'package:flutter/foundation.dart';
+﻿import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/colors.dart';
+import '../services/feedback_service.dart';
 import '../utils/responsive.dart';
+import '../utils/session.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -17,8 +20,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final _titleCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
   String _selectedCategory = 'General';
-  int _rating = 0;
-  XFile? _image;
   Uint8List? _imageBytes;
   Position? _position;
   bool _fetchingLocation = false;
@@ -44,7 +45,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
       setState(() {
-        _image = picked;
         _imageBytes = bytes;
       });
     }
@@ -85,33 +85,62 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_rating == 0) {
+
+    final reg = Session.current?.registrationNumber ?? '';
+    if (reg.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide a rating')),
+        const SnackBar(content: Text('Please log in to submit feedback.')),
       );
       return;
     }
+
     setState(() => _submitting = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() => _submitting = false);
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Feedback Submitted'),
-        content: const Text(
-            'Thank you for your feedback! Your input helps us improve NABC 2026.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
+    try {
+      // Send the picked image as a base64 data URL; the API saves it server-side.
+      final photoB64 = _imageBytes != null
+          ? 'data:image/jpeg;base64,${base64Encode(_imageBytes!)}'
+          : null;
+
+      final msg = await FeedbackService.submit(
+        registrationNumber: reg,
+        fullName: Session.current?.fullName ?? '',
+        category: _selectedCategory,
+        subject: _titleCtrl.text.trim(),
+        message: _messageCtrl.text.trim(),
+        photoBase64: photoB64,
+        latitude: _position?.latitude.toString(),
+        longitude: _position?.longitude.toString(),
+      );
+
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Feedback Submitted'),
+          content: Text(msg),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -125,8 +154,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildRatingCard(context),
-              const SizedBox(height: 16),
               _buildFormCard(context),
               const SizedBox(height: 16),
               _buildPhotoCard(context),
@@ -160,61 +187,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildRatingCard(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(context.cardPad),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(context.cardRadius),
-        boxShadow: context.cardShadow,
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Overall Rating',
-            style: TextStyle(
-              fontSize: context.sp(15),
-              fontWeight: FontWeight.w800,
-              color: context.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) {
-              return GestureDetector(
-                onTap: () => setState(() => _rating = i + 1),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Icon(
-                    i < _rating
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: AppColors.accentGold,
-                    size: context.isSmall ? 34 : 40,
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _rating == 0
-                ? 'Tap to rate'
-                : ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][_rating],
-            style: TextStyle(
-              color: _rating == 0
-                  ? context.textSecondary
-                  : AppColors.accentGold,
-              fontWeight: FontWeight.w700,
-              fontSize: context.sp(13),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -335,7 +307,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             const SizedBox(height: 10),
             TextButton.icon(
               onPressed: () => setState(() {
-                _image = null;
                 _imageBytes = null;
               }),
               icon: const Icon(Icons.delete_outline,

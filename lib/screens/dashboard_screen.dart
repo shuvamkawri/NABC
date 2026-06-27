@@ -3,12 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 import '../utils/responsive.dart';
 import '../widgets/banner_slider.dart';
+import '../widgets/advertisement_carousel.dart';
 import 'event_calendar_screen.dart';
+import 'my_events_screen.dart';
 import 'my_accommodation_screen.dart';
 import 'my_food_screen.dart';
 import 'messages_screen.dart';
 import 'feedback_screen.dart';
 import 'profile_screen.dart';
+import 'about_screen.dart';
 
 // ─── Design tokens ─────────────────────────────────────────────────────
 const _kDarkBg     = Color(0xFF07111E);
@@ -70,6 +73,9 @@ class _DashboardScreenState extends State<DashboardScreen>
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             actions: [
+              _topBtn(context, Icons.info_outline_rounded,
+                  () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const AboutScreen()))),
               _topBtn(context, Icons.person_outline_rounded,
                   () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const ProfileScreen()))),
@@ -124,10 +130,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final fadeColor = isDark ? _kDarkBg : _kLightBg;
     return Stack(fit: StackFit.expand, children: [
       BannerSlider(
-        slides: nabcBannerSlides
-            .where((s) => s.cat != 'PARTNERING ORGS')
-            .toList(),
         height: heroH,
+        excludeCategory: 'PARTNERING ORGS',
       ),
       Container(
         decoration: const BoxDecoration(
@@ -176,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 0.82,
-            children: List.generate(5, (i) => AnimatedBuilder(
+            children: List.generate(6, (i) => AnimatedBuilder(
               animation: _tileAnims[i],
               builder: (_, child) => Opacity(
                 opacity: _tileAnims[i].value.clamp(0.0, 1.0),
@@ -193,16 +197,19 @@ class _DashboardScreenState extends State<DashboardScreen>
 
           // Messages — full-width tile
           AnimatedBuilder(
-            animation: _tileAnims[5],
+            animation: _tileAnims[6],
             builder: (_, child) => Opacity(
-              opacity: _tileAnims[5].value.clamp(0.0, 1.0),
+              opacity: _tileAnims[6].value.clamp(0.0, 1.0),
               child: Transform.translate(
-                offset: Offset(0, 22 * (1 - _tileAnims[5].value.clamp(0.0, 1.0))),
+                offset: Offset(0, 22 * (1 - _tileAnims[6].value.clamp(0.0, 1.0))),
                 child: child,
               ),
             ),
-            child: _WideMessagesTile(item: items[5], isDark: isDark),
+            child: _WideMessagesTile(item: items[6], isDark: isDark),
           ),
+
+          // Sponsor advertisement carousel (admin-managed, hidden when empty)
+          const AdvertisementCarousel(),
         ],
       ),
     );
@@ -226,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick Access',
+          Text('Member Services',
               style: GoogleFonts.inter(
                 fontSize: context.sp(17),
                 fontWeight: FontWeight.w800,
@@ -234,15 +241,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                 letterSpacing: -0.4,
                 height: 1.0,
               )),
-          Text('Member Services',
-              style: GoogleFonts.inter(
-                fontSize: context.sp(10),
-                fontWeight: FontWeight.w600,
-                color: context.isDark
-                    ? const Color(0xFF4A90D9)
-                    : AppColors.primaryBlue,
-                letterSpacing: 0.4,
-              )),
+          // Text('Member Services',
+          //     style: GoogleFonts.inter(
+          //       fontSize: context.sp(10),
+          //       fontWeight: FontWeight.w600,
+          //       color: context.isDark
+          //           ? const Color(0xFF4A90D9)
+          //           : AppColors.primaryBlue,
+          //       letterSpacing: 0.4,
+          //     )),
         ],
       ),
     ]);
@@ -291,6 +298,14 @@ class _DashboardScreenState extends State<DashboardScreen>
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const EventCalendarScreen()))),
     _DashItem(
+        label: 'My Events',
+        icon: Icons.event_available_rounded,
+        imagePath: 'assets/icons/my_event.png',
+        accent: const Color(0xFF00BFA5),
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(
+                builder: (_) => const MyEventsScreen(standalone: true)))),
+    _DashItem(
         label: 'Support',
         icon: Icons.headset_mic_rounded,
         imagePath: 'assets/icons/feedback.png',
@@ -301,7 +316,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         label: 'Messages',
         icon: Icons.chat_bubble_rounded,
         accent: const Color(0xFF2196F3),
-        badge: 3,
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const MessagesScreen()))),
   ];

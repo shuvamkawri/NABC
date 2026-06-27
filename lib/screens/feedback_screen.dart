@@ -221,7 +221,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedCategory,
+            initialValue: _selectedCategory,
             dropdownColor: context.cardBg,
             style: TextStyle(
                 color: context.textPrimary, fontSize: context.sp(13)),

@@ -28,7 +28,7 @@ class Event {
     this.isFeatured = false,
   });
 
-  /// Builds an [Event] from one item of the backend `GET /api-attendee/events`
+  /// Builds an [Event] from one item of the backend `GET /api/events`
   /// `data` array. Tolerant of missing/null fields and of `performers` being
   /// either a list of strings or a list of objects with a `name`.
   factory Event.fromJson(Map<String, dynamic> json) {

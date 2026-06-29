@@ -2,29 +2,21 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../widgets/banner_slider.dart';
+import '../utils/image_url.dart';
 
 /// Web edition: fetches the admin-managed sponsor advertisements from
 /// `GET /api/all-advertisement`. Each row has `sponsorship_name`, `subtitle`,
-/// `color` and a relative `image` path (e.g. `/uploads/banners/x.jpg`); this
-/// service maps them onto [BannerSlide] and turns the image path into an
-/// absolute URL so `Image.network` can load it.
-///
-/// The advertisement endpoint lives under the backend `/api` prefix (not the
-/// `/api-attendee` member prefix), so we derive the origin from `API_BASE` and
-/// build the `/api/all-advertisement` path from it.
+/// `color` and an `image` (full S3 URL; legacy rows may be relative); this
+/// service maps them onto [BannerSlide] and resolves the image via
+/// [resolveImageUrl] so `Image.network` can load it.
 class AdvertisementService {
   static const String _apiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
 
   static String get _origin =>
       _apiBase.startsWith('http') ? Uri.parse(_apiBase).origin : '';
-
-  static String _abs(String img) {
-    if (img.isEmpty || img.startsWith('http')) return img;
-    return '$_origin${img.startsWith('/') ? '' : '/'}$img';
-  }
 
   static Future<List<BannerSlide>> fetch() async {
     final uri = Uri.parse('$_origin/api/all-advertisement');
@@ -48,7 +40,7 @@ class AdvertisementService {
         title: b['sponsorship_name']?.toString() ?? '',
         sub: b['subtitle']?.toString() ?? '',
         color: parseHexColor(b['color']?.toString()),
-        img: _abs(b['image']?.toString() ?? ''),
+        img: resolveImageUrl(b['image']?.toString()),
       );
     }).toList();
     debugPrint('✅ [ADS] loaded ${slides.length} advertisement(s)');

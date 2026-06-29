@@ -217,8 +217,30 @@
       });
     }
 
+    // ---- Public API used by the Flutter app (in-app "Install app" button) ----
+    var readyCbs = [];
+    function notifyReady() {
+      readyCbs.forEach(function (c) { try { c(); } catch (e) {} });
+    }
+    // True once the app can be installed: native prompt captured, or iOS (manual steps).
+    window.nabcIsInstallReady = function () {
+      return (!!window.__nabcDeferredPrompt || isIOS()) && !isStandalone();
+    };
+    window.nabcIsStandalone = function () { return isStandalone(); };
+    // Let Flutter (re)check when the install state changes.
+    window.nabcRegisterReady = function (cb) {
+      if (typeof cb === 'function') { readyCbs.push(cb); }
+    };
+    // Trigger install from anywhere (e.g. an in-app button). Handles every platform.
+    window.nabcInstall = function () {
+      if (window.__nabcDeferredPrompt) { doInstall(); return; }
+      iosMode = isIOS();
+      show(); // iOS -> manual steps; otherwise a branded reminder card
+    };
+
     // Exposed so the early beforeinstallprompt handler can trigger us.
     window.__nabcShowInstall = function () {
+      notifyReady(); // always let the in-app button appear, even if the banner is suppressed
       if (isStandalone() || recentlyDismissed()) return;
       iosMode = false;
       show();
@@ -227,6 +249,7 @@
     window.addEventListener('appinstalled', function () {
       window.__nabcDeferredPrompt = null;
       if (root) root.classList.remove('nabc-show');
+      notifyReady(); // lets the in-app button hide itself
     });
 
     function init() {

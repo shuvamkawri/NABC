@@ -1,5 +1,5 @@
 /// A hotel/accommodation booking from
-/// `GET /api-attendee/find-attendee-hotel`.
+/// `GET /api/find-attendee-hotel`.
 ///
 /// The endpoint returns rows from more than one table, so the shapes differ
 /// between items. Every field is therefore optional and read defensively.

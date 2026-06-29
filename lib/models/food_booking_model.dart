@@ -15,7 +15,7 @@ class MealSlot {
   int get total => veg + nonVeg;
 }
 
-/// A food booking from `GET /api-attendee/find-attendee-food`.
+/// A food booking from `GET /api/find-attendee-food`.
 class FoodBooking {
   final int id;
   final String registrationNumber;

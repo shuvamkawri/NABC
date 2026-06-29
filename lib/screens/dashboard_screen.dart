@@ -4,6 +4,7 @@ import '../constants/colors.dart';
 import '../utils/responsive.dart';
 import '../widgets/banner_slider.dart';
 import '../widgets/advertisement_carousel.dart';
+import '../widgets/install_button.dart';
 import 'event_calendar_screen.dart';
 import 'my_events_screen.dart';
 import 'my_accommodation_screen.dart';
@@ -73,6 +74,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             actions: [
+              const InstallButton(),
               _topBtn(context, Icons.info_outline_rounded,
                   () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const AboutScreen()))),

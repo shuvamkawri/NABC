@@ -3,13 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Web edition — submits a support/feedback ticket to
-/// `POST /api-attendee/create-feedback`, using the same `API_BASE` as the
+/// `POST /api/create-feedback`, using the same `API_BASE` as the
 /// other web services. The photo is sent as a base64 data URL; the server
 /// saves it and stores the path. Latitude/longitude are optional strings.
 class FeedbackService {
   static const String _base = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
 
   static Future<String> submit({

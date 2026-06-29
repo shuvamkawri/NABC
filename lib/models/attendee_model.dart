@@ -1,4 +1,4 @@
-/// Attendee returned by `POST /api-attendee/find-attendee`.
+/// Attendee returned by `POST /api/find-attendee`.
 class Attendee {
   final int id;
   final int? registrationId;

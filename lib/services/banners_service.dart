@@ -2,24 +2,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../widgets/banner_slider.dart';
+import '../utils/image_url.dart';
 
 /// Web edition: fetches admin-managed slider banners. Uses the same `API_BASE`
-/// as the other web services and resolves the relative image path to an
-/// absolute URL on the backend origin.
+/// as the other web services; image URLs (full S3 URLs, or legacy relative
+/// paths) are resolved via [resolveImageUrl].
 class BannersService {
   static const String _apiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
-
-  static String _abs(String img) {
-    if (img.isEmpty || img.startsWith('http')) return img;
-    if (_apiBase.startsWith('http')) {
-      final origin = Uri.parse(_apiBase).origin; // scheme://host:port
-      return '$origin${img.startsWith('/') ? '' : '/'}$img';
-    }
-    return img; // relative API_BASE (proxy) → same-origin path
-  }
 
   static Future<List<BannerSlide>> fetch() async {
     final uri = Uri.parse('$_apiBase/banners');
@@ -38,7 +30,7 @@ class BannersService {
         title: b['title']?.toString() ?? '',
         sub: b['sub']?.toString() ?? '',
         color: parseHexColor(b['color']?.toString()),
-        img: _abs(b['img']?.toString() ?? ''),
+        img: resolveImageUrl(b['img']?.toString()),
       );
     }).toList();
   }

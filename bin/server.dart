@@ -6,7 +6,7 @@
 // talk to a normal same-origin endpoint:
 //
 //   * Serves the compiled Flutter web app from build/web
-//   * Proxies  POST /api/<name>  →  GET-with-body  http://45.79.175.205:3000/api-attendee/<name>
+//   * Proxies  POST /api/<name>  →  GET-with-body  https://shanviaconsulting.com/api/<name>
 //   * Adds permissive CORS headers (so it also works cross-origin in dev)
 //
 // Run:
@@ -21,7 +21,7 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_static/shelf_static.dart';
 import 'package:http/http.dart' as http;
 
-const _upstream = 'http://45.79.175.205:3000/api-attendee';
+const _upstream = 'https://shanviaconsulting.com/api';
 
 // The 3 attendee lookups: the live backend reads their payload from a GET body,
 // so the proxy converts the browser's POST into a GET-with-body upstream call.

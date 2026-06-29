@@ -34,7 +34,7 @@ class ChatMessage {
 class ChatService {
   static const String _base = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
 
   static Future<List<ChatMessage>> fetch(String phone, {int since = 0}) async {

@@ -6,13 +6,13 @@ import '../models/event_model.dart';
 /// Web edition: fetches the admin-managed event list.
 ///
 /// Uses the same `API_BASE` as [AttendeeService] so it works either directly
-/// against the backend (`.../api-attendee/events`) or through the bundled Dart
+/// against the backend (`.../api/events`) or through the bundled Dart
 /// proxy (`/api/events`). This is a plain GET (no body), so no proxy is strictly
 /// required when the page is served over http and CORS is open.
 class EventsService {
   static const String _apiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
 
   static Future<List<Event>> fetchEvents() async {

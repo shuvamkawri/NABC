@@ -20,7 +20,7 @@ class AttendeeException implements Exception {
 /// cannot send. This web build instead sends a normal **POST** with the same
 /// JSON payload. The endpoint is configurable via `--dart-define=API_BASE=...`:
 ///
-///   • default  → the backend directly (`http://45.79.175.205:3000/api-attendee`).
+///   • default  → the backend directly (`https://shanviaconsulting.com/api`).
 ///                Works for `flutter run -d chrome` (http page → http API is
 ///                allowed) once the backend accepts POST. CORS is already `*`.
 ///   • `/api`   → the bundled Dart proxy on the same origin (see bin/server.dart).
@@ -30,7 +30,7 @@ class AttendeeException implements Exception {
 class AttendeeService {
   static const String _apiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://45.79.175.205:3000/api-attendee',
+    defaultValue: 'https://shanviaconsulting.com/api',
   );
 
   /// Looks up an attendee by phone number, trying the common US formats the

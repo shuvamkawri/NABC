@@ -103,7 +103,7 @@ files under `assets/`/`canvaskit/` can be cached long-term.
 The app talks to the backend API, default:
 
 ```
-http://45.79.175.205:3000/api-attendee
+https://shanviaconsulting.com/api
 ```
 
 This is **plain HTTP**. If the web app is served over **HTTPS** (which any real
@@ -114,16 +114,16 @@ login, events, bookings, banners, feedback, and chat will all silently fail.
 
 1. **Give the backend an HTTPS URL** (TLS cert / domain), then build with:
    ```powershell
-   flutter build web --release --base-href=/NABC/ --dart-define=API_BASE=https://api.yourdomain.com/api-attendee
+   flutter build web --release --base-href=/NABC/ --dart-define=API_BASE=https://api.yourdomain.com/api
    ```
 2. **Reverse-proxy the API behind the same HTTPS domain** (recommended). E.g. in
-   Nginx, proxy `https://yourdomain/api/` → `http://45.79.175.205:3000/api-attendee`,
+   Nginx, proxy `https://yourdomain/api/` → `https://shanviaconsulting.com/api`,
    then build with `--dart-define=API_BASE=/api` (same-origin, no mixed content,
    no CORS issue).
 
    ```nginx
    location /api/ {
-       proxy_pass http://45.79.175.205:3000/api-attendee/;
+       proxy_pass https://shanviaconsulting.com/api/;
    }
    ```
 
